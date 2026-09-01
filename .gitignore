@@ -1,0 +1,13 @@
+.DS_Store
+._*
+node_modules
+nohup.out
+# Rust build artifacts
+target/
+# Upstream RuVector repo: only the rvf crate (used by tools/voiceprint) is vendored
+RuVector-main/*
+!RuVector-main/crates/
+RuVector-main/crates/*
+!RuVector-main/crates/rvf/
+# Other people's private message content — never leaves this machine (see raw-data/CAVEATS.md)
+raw-data/linkedin-export/messages.csv

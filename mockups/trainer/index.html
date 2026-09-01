@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Intern — DODO trainer</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --paper: #141815; --card: #1c211d; --card-2: #232a25;
+    --ink: #e9e7de; --ink-2: #b4b8ad; --muted: #7e857d;
+    --accent: #55b18e; --accent-dim: #1d2f27;
+    --no: #d06a5a; --warn: #d9a441; --violet: #9d93e6;
+    --hairline: #2b302b;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .3rem 0 1rem; }
+  header h1 { font-size: 17px; font-weight: 700; letter-spacing: .02em; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  .stats { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .stats b { color: var(--ink); font-weight: 600; }
+
+  /* suggestion card */
+  .scard {
+    background: var(--card); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 1.25rem 1.3rem 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,.35);
+  }
+  .kind { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+  .kind.confident { color: var(--accent); }
+  .kind.probe { color: var(--warn); }
+  .scard h2 { font-size: 23px; font-weight: 750; margin: .45rem 0 .1rem; line-height: 1.2; }
+  .who { color: var(--ink-2); font-size: 14px; }
+  .for-line { margin: .9rem 0 .2rem; font-size: 15px; }
+  .for-line .co { font-weight: 700; color: var(--accent); }
+  .angle { font-style: italic; color: var(--ink-2); font-size: 14px; }
+  .why { margin-top: .9rem; border-top: 1px solid var(--hairline); padding-top: .8rem; display: grid; gap: .45rem; }
+  .why div { font-size: 13.5px; color: var(--ink-2); padding-left: 1.1rem; position: relative; }
+  .why div::before { content: "·"; position: absolute; left: .2rem; color: var(--accent); font-weight: 700; }
+  .why div.evidence::before { content: "▸"; font-size: 10px; top: .2em; }
+  .known { margin-top: .7rem; font-size: 12.5px; color: var(--violet); }
+
+  /* response controls */
+  .respond { margin-top: 1rem; display: grid; gap: .55rem; }
+  .row { display: flex; gap: .55rem; flex-wrap: wrap; }
+  button { font: 600 14px/1.3 system-ui, sans-serif; cursor: pointer; border-radius: 10px; padding: .7rem 1rem; border: 1px solid var(--hairline); background: var(--card-2); color: var(--ink); }
+  button:active { transform: translateY(1px); }
+  .b-good { background: var(--accent); border-color: var(--accent); color: #0c1611; flex: 2; }
+  .b-goodbut { color: var(--accent); border-color: var(--accent); background: transparent; flex: 1.4; }
+  .b-no { color: var(--no); border-color: var(--no); background: transparent; flex: 1.4; }
+  .b-skip { color: var(--muted); flex: .8; }
+
+  .chips { display: none; flex-wrap: wrap; gap: .45rem; padding-top: .3rem; }
+  .chips.open { display: flex; }
+  .chip { font-size: 13px; font-weight: 500; padding: .5rem .8rem; border-radius: 999px; background: var(--card-2); }
+  .chips.no .chip { border-color: rgba(208,106,90,.4); }
+  .chips.gb .chip { border-color: rgba(85,177,142,.4); }
+
+  .whybox { display: none; margin-top: .5rem; gap: .5rem; }
+  .whybox.open { display: flex; }
+  .whybox input { flex: 1; font: 15px system-ui; background: var(--card-2); border: 1px solid var(--hairline); border-radius: 10px; padding: .65rem .8rem; color: var(--ink); }
+  .whybox input::placeholder { color: var(--muted); }
+  .mic { flex: none; width: 46px; font-size: 18px; }
+  .mic.rec { border-color: var(--no); color: var(--no); animation: pulse 1.1s infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  .toast {
+    margin-top: .8rem; padding: .7rem 1rem; border-radius: 10px; background: var(--accent-dim);
+    border-left: 3px solid var(--accent); font-size: 13.5px; color: var(--ink-2); display: none;
+  }
+  .toast.show { display: block; }
+  .toast b { color: var(--accent); }
+
+  /* panels */
+  .panels { margin-top: 1.6rem; display: grid; gap: .8rem; }
+  details { background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: .85rem 1.1rem; }
+  summary { cursor: pointer; font-weight: 700; font-size: 14px; list-style: none; display: flex; justify-content: space-between; }
+  summary::after { content: "▾"; color: var(--muted); }
+  details[open] summary::after { content: "▴"; }
+  summary .n { color: var(--accent); margin-left: .4rem; }
+  .learned, .queue, .log { margin-top: .7rem; display: grid; gap: .5rem; font-size: 13.5px; }
+  .learned div { color: var(--ink-2); padding-left: 1.1rem; position: relative; }
+  .learned div::before { content: "◆"; position: absolute; left: 0; font-size: 9px; top: .35em; color: var(--violet); }
+  .learned div.new::before { color: var(--accent); }
+  .learned div .src { color: var(--muted); font-size: 12px; }
+  .queue div { color: var(--ink-2); } .queue b { color: var(--ink); }
+  .foot { margin-top: 1.4rem; display: flex; gap: .6rem; align-items: center; }
+  .foot button { font-size: 13px; }
+  .foot .note { font-size: 12px; color: var(--muted); }
+  .pattern {
+    margin-top: .8rem; padding: .75rem 1rem; border-radius: 10px; background: rgba(157,147,230,.1);
+    border-left: 3px solid var(--violet); font-size: 13.5px; display: none;
+  }
+  .pattern.show { display: block; }
+  .pattern b { color: var(--violet); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>The Intern <span>· knows the files, learning your head</span> &nbsp;<a href="week.html" style="color:var(--accent);font-size:13px;text-decoration:none;font-weight:600">→ this week</a></h1>
+      <div class="stats">
+        <span>reviewed <b id="st-n">0</b></span>
+        <span>we agree <b id="st-agree">–</b></span>
+        <span>learned <b id="st-rules">0</b></span>
+      </div>
+    </header>
+
+    <div class="scard" id="card"></div>
+
+    <div class="respond">
+      <div class="row">
+        <button class="b-good" id="b-good">✓ Good — queue it</button>
+        <button class="b-goodbut" id="b-goodbut">Good, but…</button>
+        <button class="b-no" id="b-no">✗ No good…</button>
+        <button class="b-skip" id="b-skip">skip</button>
+      </div>
+      <div class="chips no" id="chips-no"></div>
+      <div class="chips gb" id="chips-gb"></div>
+      <div class="whybox" id="whybox">
+        <input id="why" placeholder="tell me why (talk or type — this is how I learn)…">
+        <button class="mic" id="mic" title="talk">🎙</button>
+        <button id="why-done">Save</button>
+      </div>
+      <div class="toast" id="toast"></div>
+      <div class="pattern" id="pattern"></div>
+    </div>
+
+    <div class="panels">
+      <details open>
+        <summary>What I’ve learned about your world<span class="n" id="n-learned"></span></summary>
+        <div class="learned" id="learned"></div>
+      </details>
+      <details>
+        <summary>Approved queue — today’s calls<span class="n" id="n-queue"></span></summary>
+        <div class="queue" id="queue"></div>
+      </details>
+    </div>
+
+    <div class="foot">
+      <button id="export">⬇ Export training log</button>
+      <button id="reset">Reset session</button>
+      <span class="note" id="foot-note"></span>
+    </div>
+  </div>
+
+  <script src="pool.js"></script>
+  <script src="trainer.js"></script>
+</body>
+</html>

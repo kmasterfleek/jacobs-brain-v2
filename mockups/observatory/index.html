@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Observatory — Jacob's capsule</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --paper: #0d0d0d; --panel: #1a1f1b; --panel-2: #232a25;
+    --ink: #e9e7de; --ink-2: #b4b8ad; --muted: #7e857d;
+    --accent: #55b18e; --violet: #9d93e6; --warn: #d9a441;
+    --hairline: rgba(255,255,255,.09);
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #sky { position: fixed; inset: 0; }
+
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: linear-gradient(rgba(13,13,13,.92), rgba(13,13,13,0)); pointer-events: none;
+  }
+  header > * { pointer-events: auto; }
+  h1 { font-size: 15px; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
+  h1 span { color: var(--muted); font-weight: 400; }
+  #searchbox { display: flex; gap: 8px; flex: 1; min-width: 280px; max-width: 520px; }
+  #q {
+    flex: 1; font: 15px system-ui; padding: 9px 14px; border-radius: 999px;
+    border: 1px solid var(--hairline); background: rgba(26,31,27,.9); color: var(--ink);
+  }
+  #q::placeholder { color: var(--muted); }
+  #q:focus { outline: none; border-color: var(--accent); }
+  #go { padding: 9px 16px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #0c1611; font: 600 14px system-ui; cursor: pointer; }
+  #clear { padding: 9px 12px; border-radius: 999px; border: 1px solid var(--hairline); background: transparent; color: var(--muted); font: 13px system-ui; cursor: pointer; display: none; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font: 12.5px system-ui; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--hairline); background: rgba(26,31,27,.8); color: var(--ink-2); cursor: pointer; }
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+
+  #status { position: fixed; top: 64px; left: 16px; z-index: 9; font-size: 12.5px; color: var(--muted); }
+  #status b { color: var(--accent); }
+  body.calopen #status { left: 372px; }
+  body.calopen #legend { display: none; }
+
+  #calbtn { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--warn); background: transparent;
+    color: var(--warn); font: 600 13px system-ui; cursor: pointer; white-space: nowrap; }
+  #calbtn.on { background: var(--warn); color: #1c1408; }
+
+  #cal { position: fixed; top: 60px; left: 14px; bottom: 96px; width: 342px; z-index: 20;
+    background: rgba(26,31,27,.97); border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 14px; overflow-y: auto; transform: translateX(-16px); opacity: 0; pointer-events: none; transition: all .2s; }
+  #cal.show { transform: none; opacity: 1; pointer-events: auto; }
+  #cal h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); }
+  #cal .x { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+  .daytabs { display: flex; gap: 4px; margin: 10px 0 8px; }
+  .daytab { flex: 1; padding: 6px 0; font: 12px system-ui; text-align: center; border-radius: 8px;
+    border: 1px solid var(--hairline); background: transparent; color: var(--ink-2); cursor: pointer; }
+  .daytab.on { background: var(--panel-2); color: var(--ink); border-color: var(--warn); }
+  .mtg { margin-top: 6px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; cursor: pointer;
+    border-left: 2px solid transparent; }
+  .mtg:hover { border-left-color: var(--warn); }
+  .mtg.open { border-left-color: var(--warn); background: #2a3129; }
+  .mtg .head { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; }
+  .mtg .t { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 38px; }
+  .mtg .title { color: var(--ink); flex: 1; line-height: 1.35; }
+  .mtg .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 3px; vertical-align: middle; }
+  .mtg .insky { font-size: 11px; color: var(--warn); white-space: nowrap; }
+  .mtg .body { display: none; margin-top: 8px; }
+  .mtg.open .body { display: block; }
+  .mtg .prep { font-size: 12px; color: var(--violet); border-left: 2px solid var(--violet); padding: 3px 8px; margin-top: 6px; }
+  .mtg .mflag { font-size: 12px; color: var(--warn); border-left: 2px solid var(--warn); padding: 3px 8px; margin-top: 6px; }
+  .mtg .who { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .mtg .who .star-chip { font: 12px system-ui; padding: 3px 9px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--warn); color: var(--warn); background: rgba(217,164,65,.08); }
+  .mtg .who .star-chip:hover { background: rgba(217,164,65,.2); }
+  .mtg .who .nostar { font: 11.5px system-ui; padding: 3px 9px; border-radius: 999px;
+    border: 1px dashed var(--hairline); color: var(--muted); }
+  .mtg .who .star-chip .rm { margin-left: 5px; opacity: .65; }
+  .mtg .who .star-chip .rm:hover { opacity: 1; }
+  .addwho { position: relative; margin-top: 8px; }
+  .addwho input { width: 100%; font: 12.5px system-ui; padding: 6px 10px; border-radius: 8px;
+    border: 1px dashed var(--hairline); background: rgba(13,13,13,.5); color: var(--ink); }
+  .addwho input::placeholder { color: var(--muted); }
+  .addwho input:focus { outline: none; border-color: var(--warn); border-style: solid; }
+  .addwho .sugg { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px;
+    background: var(--panel-2); border: 1px solid var(--hairline); border-radius: 8px; z-index: 5;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  .addwho .sugg > div { padding: 6px 10px; font-size: 12.5px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+  .addwho .sugg > div:hover { background: rgba(217,164,65,.15); }
+  .addwho .sugg .m { color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .addwho .sugg .none { color: var(--muted); cursor: default; }
+  .addwho .sugg .none:hover { background: none; }
+  .mtg .guess { display: flex; gap: 6px; margin-top: 9px; }
+  .mtg .guess input { flex: 1; font: 12.5px system-ui; padding: 6px 10px; border-radius: 8px;
+    border: 1px solid var(--hairline); background: rgba(13,13,13,.5); color: var(--ink); }
+  .mtg .guess input:focus { outline: none; border-color: var(--accent); }
+  .mtg .guess button { padding: 6px 11px; border-radius: 8px; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent); font: 600 12px system-ui; cursor: pointer; white-space: nowrap; }
+  .mtg .guess button:hover { background: var(--accent); color: #0c1611; }
+  .calhint { margin-top: 4px; font-size: 11px; color: var(--muted); }
+
+  #panel {
+    position: fixed; top: 60px; right: 14px; bottom: 96px; width: 340px; z-index: 20;
+    background: rgba(26,31,27,.97); border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 16px; overflow-y: auto; transform: translateX(16px); opacity: 0; pointer-events: none; transition: all .2s;
+  }
+  #panel.show { transform: none; opacity: 1; pointer-events: auto; }
+  #panel .x { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+  #panel h2 { font-size: 18px; font-weight: 700; padding-right: 20px; }
+  .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .stat-row { display: flex; gap: 14px; margin: 10px 0 4px; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .stat-row b { color: var(--ink); }
+  .note { margin-top: 10px; font-size: 12.5px; color: var(--violet); border-left: 2px solid var(--violet); padding: 4px 10px; }
+  .calrow { margin-top: 10px; font-size: 12.5px; color: var(--warn); }
+  .spark { margin-top: 10px; }
+  .frag { margin-top: 8px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+  .frag .d { color: var(--muted); font-size: 11px; }
+  .frag a { color: var(--accent); text-decoration: none; font-size: 11px; }
+  .frag.hit { border-left: 2px solid var(--accent); }
+  .sect { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--hairline); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .p-hit { display: flex; justify-content: space-between; padding: 6px 4px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .p-hit:hover { background: rgba(255,255,255,.05); }
+  .p-hit b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  #timeline { position: fixed; left: 16px; right: 372px; bottom: 14px; height: 72px; z-index: 8;
+    background: rgba(13,13,13,.6); border-radius: 10px; padding: 6px 10px 2px; }
+  #timeline.wide { right: 16px; }
+  #tl-label { font-size: 10.5px; color: var(--muted); letter-spacing: .06em; }
+  #tl { width: 100%; height: 52px; }
+
+  #legend { position: fixed; left: 16px; bottom: 96px; z-index: 8; font-size: 11.5px; color: var(--muted);
+    line-height: 1.8; background: rgba(13,13,13,.55); padding: 8px 12px; border-radius: 10px; }
+  #tip { position: fixed; z-index: 30; display: none; max-width: 260px; padding: 8px 11px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--hairline); font-size: 12.5px; pointer-events: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,.6); }
+  #tip .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+  <canvas id="sky"></canvas>
+
+  <header>
+    <h1>The Observatory <span>· 18,160 fragments · 13 years · one capsule</span></h1>
+    <div id="searchbox">
+      <input id="q" placeholder="ask the capsule anything… (semantic search)">
+      <button id="go">Search</button>
+      <button id="clear">× clear</button>
+    </div>
+    <button id="calbtn">⚑ This week’s calendar</button>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <aside id="cal"></aside>
+  <div id="status"></div>
+  <div id="tip"></div>
+  <aside id="panel"></aside>
+
+  <div id="legend">
+    ✦ star = someone Jacob addresses (size = how often, 13yrs)<br>
+    · dust = one comment fragment, placed by meaning<br>
+    <span style="color:var(--accent)">●</span> lit = matches your search · lines → who it was said to<br>
+    <span style="color:var(--warn)">⚑ amber</span> = this week's calendar — click a meeting to light its people<br>
+    drag to pan · scroll to zoom · click a star
+  </div>
+
+  <div id="timeline" class="wide">
+    <div id="tl-label">FRAGMENTS PER YEAR · 2013 → 2026</div>
+    <canvas id="tl"></canvas>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

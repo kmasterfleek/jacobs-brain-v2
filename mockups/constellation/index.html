@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DODO v2 — The Constellation</title>
+<style>
+  /* Committed dark design — a starfield has one sky. Ink/chrome tokens from the
+     validated dark palette; company hues are categorical slots 1–3 (dark steps). */
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #222220;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --hairline: rgba(255,255,255,0.10); --violet: #9085e9;
+    --good: #0ca30c; --warn: #fab219; --bad: #d03b3b; --aqua: #199e70;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--page); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+
+  header { position: fixed; inset: 0 0 auto 0; z-index: 10; display: flex; align-items: center; gap: 16px;
+    padding: 12px 18px; background: linear-gradient(rgba(13,13,13,.92), rgba(13,13,13,0)); }
+  header h1 { font-size: 15px; font-weight: 650; letter-spacing: .04em; white-space: nowrap; }
+  header h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; letter-spacing: 0; }
+  #companies { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--hairline); background: rgba(26,26,25,.8); color: var(--ink-2);
+    font: 13px system-ui, sans-serif; cursor: pointer; transition: all .15s; }
+  .chip:hover { border-color: rgba(255,255,255,.3); color: var(--ink); }
+  .chip.active { background: var(--surface-2); color: var(--ink); border-color: rgba(255,255,255,.4); }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .heat { font-size: 11px; color: var(--muted); }
+  .heat-hot { color: var(--warn); } .heat-cooling { color: var(--muted); }
+  #voice-btn { margin-left: auto; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--aqua);
+    background: transparent; color: var(--aqua); font: 13px system-ui, sans-serif; cursor: pointer; }
+  #voice-btn:hover { background: rgba(25,158,112,.12); }
+
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  #tip { position: fixed; z-index: 30; display: none; max-width: 230px; padding: 9px 11px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--hairline); font-size: 12.5px; pointer-events: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,.6); }
+  .muted { color: var(--muted); }
+  .cap-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11.5px; }
+  .cap-bar { display: inline-block; position: relative; width: 90px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); overflow: hidden; vertical-align: middle; }
+  .cap-bar span { display: block; height: 100%; background: #fff; border-radius: 2px; }
+  .cap-bar.sm { width: 70px; } .cap-bar.big { width: 100%; height: 6px; margin: 6px 0 4px; }
+  .tip-unknown { margin-top: 6px; font-size: 11.5px; color: var(--ink-2); font-style: italic; }
+  .tip-paid { margin-top: 6px; font-size: 11.5px; color: var(--aqua); }
+
+  /* briefing */
+  #briefing { position: fixed; left: 18px; bottom: 18px; z-index: 10; width: 380px; max-width: calc(100vw - 36px);
+    background: rgba(26,26,25,.94); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px;
+    transform: translateY(16px); opacity: 0; pointer-events: none; transition: all .25s; }
+  #briefing.show { transform: none; opacity: 1; pointer-events: auto; }
+  .b-head { font-size: 13px; color: var(--ink-2); padding-bottom: 8px; border-bottom: 2px solid; margin-bottom: 6px; }
+  .b-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 4px; border-radius: 8px; cursor: pointer; }
+  .b-row:hover { background: rgba(255,255,255,.05); }
+  .b-num { flex: none; width: 18px; height: 18px; border-radius: 50%; color: #0d0d0d; font-weight: 700; font-size: 11px;
+    display: inline-flex; align-items: center; justify-content: center; transform: translateY(3px); }
+  .b-name { font-weight: 600; white-space: nowrap; }
+  .b-why { font-size: 12px; color: var(--muted); }
+  .b-unused { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--hairline); font-size: 12px; color: var(--violet); }
+
+  /* legend */
+  #legend { position: fixed; right: 18px; bottom: 18px; z-index: 5; font-size: 11.5px; color: var(--muted);
+    background: rgba(13,13,13,.7); padding: 10px 12px; border-radius: 10px; line-height: 1.9; transition: right .22s; }
+  body.panel-open #legend { right: 366px; }
+  #legend b { color: var(--ink-2); font-weight: 500; }
+  .lg { display: inline-block; width: 10px; text-align: center; margin-right: 6px; }
+
+  /* contact panel */
+  #panel { position: fixed; top: 64px; right: 18px; bottom: 18px; z-index: 20; width: 330px; overflow-y: auto;
+    background: rgba(26,26,25,.97); border: 1px solid var(--hairline); border-radius: 14px; padding: 18px;
+    transform: translateX(20px); opacity: 0; pointer-events: none; transition: all .22s; }
+  #panel.show { transform: none; opacity: 1; pointer-events: auto; }
+  #panel h2 { font-size: 18px; font-weight: 650; }
+  #panel .x { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+  .hub-tag { font-size: 10px; color: var(--violet); border: 1px solid var(--violet); border-radius: 4px; padding: 1px 5px; vertical-align: middle; letter-spacing: .06em; }
+  .mrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; font-size: 12.5px; color: var(--ink-2); }
+  .mrow em { color: var(--ink); font-style: normal; font-size: 12px; text-align: right; }
+  .dots .d { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.14); margin-left: 4px; }
+  .dots .d.on { background: #fff; } .dots .d.on.violet { background: var(--violet); }
+  .cap-block { margin-top: 14px; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; }
+  .cap-head { display: flex; justify-content: space-between; font-size: 12.5px; }
+  .cap-head .low { color: var(--warn); }
+  .cap-foot { font-size: 11.5px; }
+  .tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-size: 11px; color: var(--ink-2); border: 1px solid var(--hairline); border-radius: 999px; padding: 2px 9px; }
+  .flag { margin-top: 10px; font-size: 12px; color: var(--ink-2); background: rgba(250,178,25,.07); border-left: 2px solid var(--warn);
+    padding: 8px 10px; border-radius: 0 8px 8px 0; }
+  .flag .fi { margin-right: 6px; }
+  .note { margin-top: 12px; font-size: 12.5px; color: var(--ink-2); font-style: italic; border-top: 1px solid var(--hairline); padding-top: 10px; }
+  .sect { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hairline); font-size: 13px; }
+  .warns { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--warn); }
+  .pick-co { margin-top: 16px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--hairline); padding-top: 12px; }
+  .unknown-block { margin-top: 14px; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+  .dojo-btn { margin-top: 14px; width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--violet);
+    background: rgba(144,133,233,.12); color: #cfc9ff; font: 600 13.5px system-ui, sans-serif; cursor: pointer; }
+  .dojo-btn:hover { background: rgba(144,133,233,.22); }
+
+  /* dojo modal */
+  #dojo, #voice { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.65); backdrop-filter: blur(3px); }
+  #dojo.show, #voice.show { display: flex; }
+  .modal { width: 620px; max-width: calc(100vw - 32px); max-height: calc(100vh - 60px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.7); }
+  #dojo-title { font-size: 16px; }
+  #dojo-angle { margin-top: 4px; font-size: 12.5px; color: var(--ink-2); }
+  #dojo-chat { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 90px; }
+  .msg { max-width: 85%; padding: 9px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
+  .msg .who { display: block; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .msg.twin { background: var(--surface-2); border: 1px solid var(--hairline); align-self: flex-start; }
+  .msg.me { background: rgba(144,133,233,.15); border: 1px solid rgba(144,133,233,.3); align-self: flex-end; }
+  .ch-label { font-size: 12px; color: var(--muted); margin: 12px 0 2px; }
+  .choice { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 10px 13px; border-radius: 10px;
+    border: 1px solid var(--hairline); background: transparent; color: var(--ink-2); font: 13px/1.45 system-ui, sans-serif; cursor: pointer; }
+  .choice:hover { border-color: var(--violet); color: var(--ink); }
+  .ch-tag { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); }
+  #gauge { margin-top: 14px; }
+  .g-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .g-bar { position: relative; height: 10px; border-radius: 5px; background: rgba(255,255,255,.1); margin-top: 5px; overflow: hidden; }
+  .g-cap { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,.55); border-radius: 5px; }
+  .g-spend { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, var(--warn), var(--warn) 3px, transparent 3px, transparent 6px); }
+  .g-foot { font-size: 11.5px; margin-top: 4px; }
+  .verdict { margin-top: 14px; border-radius: 12px; padding: 13px 15px; border: 1px solid var(--hairline); }
+  .v-good { border-left: 3px solid var(--good); } .v-warn { border-left: 3px solid var(--warn); } .v-bad { border-left: 3px solid var(--bad); }
+  .v-badge { font-weight: 700; font-size: 13.5px; margin-right: 10px; }
+  .v-good .v-badge { color: var(--good); } .v-warn .v-badge { color: var(--warn); } .v-bad .v-badge { color: var(--bad); }
+  .v-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12px; }
+  .v-advice { margin-top: 7px; font-size: 13px; color: var(--ink-2); }
+  .v-alt { margin-top: 8px; font-size: 12.5px; color: var(--violet); }
+  .v-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .v-actions button { padding: 7px 13px; border-radius: 8px; font: 12.5px system-ui, sans-serif; cursor: pointer; }
+  .ghost { background: transparent; border: 1px solid var(--hairline); color: var(--ink-2); }
+  .ghost:hover { border-color: rgba(255,255,255,.35); color: var(--ink); }
+  .primary { background: var(--aqua); border: 1px solid var(--aqua); color: #06130d; font-weight: 650; }
+
+  /* voice modal */
+  .rec { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); animation: blink 1.1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .vtext { margin-top: 12px; font-size: 15px; line-height: 1.65; font-style: italic; color: var(--ink); min-height: 76px; }
+  .diff { margin-top: 16px; border-top: 1px solid var(--hairline); padding-top: 12px; }
+  .d-head { font-size: 13px; margin-bottom: 8px; }
+  .d-row { font-size: 12.5px; padding: 6px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+  .d-field { color: var(--muted); min-width: 92px; }
+  .d-from { color: var(--muted); text-decoration: line-through; }
+  .d-to { color: var(--aqua); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>DODO&nbsp;v2 <small>the constellation · mockup — demo data from voice pass 1</small></h1>
+    <div id="companies"></div>
+    <button id="voice-btn">● Voice pass</button>
+  </header>
+
+  <div id="stage"><canvas id="sky"></canvas></div>
+
+  <div id="tip"></div>
+  <div id="briefing"></div>
+  <aside id="panel"></aside>
+
+  <div id="legend">
+    <b>Reading the sky</b><br>
+    <span class="lg">◎</span>rings = access depth · 5 “knows my family” → 1 “met once”<br>
+    <span class="lg">✦</span>glow = ask capacity (goodwill charge)<br>
+    <span class="lg" style="color:var(--violet)">◯</span>halo = opener — produces new names<br>
+    <span class="lg" style="color:var(--warn)">◔</span>amber arc = recharging after asks<br>
+    <span class="lg" style="color:var(--aqua)">▣</span>paid instrument — never depletes<br>
+    <span class="lg">◌</span>dotted = in roster, unrated (unknown ≠ low value)<br>
+    <span class="lg">·</span>dust = the 21,446-connection LinkedIn field
+  </div>
+
+  <div id="dojo"><div class="modal">
+    <div id="dojo-title"></div>
+    <div id="dojo-angle"></div>
+    <div id="dojo-chat"></div>
+    <div id="dojo-choices"></div>
+    <div id="gauge"></div>
+    <div id="dojo-verdict"></div>
+  </div></div>
+
+  <div id="voice"><div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>Voice pass</strong><button class="ghost" id="voice-close" style="border:none;font-size:18px">×</button>
+    </div>
+    <div id="voice-body"></div>
+  </div></div>
+
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="viz.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

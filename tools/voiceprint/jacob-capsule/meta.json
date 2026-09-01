@@ -1,0 +1,1 @@
+{"name":"jacob-voice","dim":384,"n":18160,"embedder":"onnx:Xenova/all-MiniLM-L6-v2 (mean-pool, normalized, quantized)","df":null,"created":"2026-08-18T17:57:05.278Z"}

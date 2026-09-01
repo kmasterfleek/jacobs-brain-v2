@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>This Week — the Intern</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --paper: #141815; --card: #1c211d; --card-2: #232a25;
+    --ink: #e9e7de; --ink-2: #b4b8ad; --muted: #7e857d;
+    --accent: #55b18e; --warn: #d9a441; --no: #d06a5a; --violet: #9d93e6;
+    --hairline: #2b302b;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font: 15.5px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 1.1rem 1rem 4rem; }
+  header { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: .8rem; }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  header a { color: var(--accent); font-size: 13px; text-decoration: none; }
+  #tabs { display: flex; gap: .4rem; margin-bottom: .6rem; }
+  .tab { flex: 1; font: 600 13.5px system-ui; padding: .55rem 0; border-radius: 10px; border: 1px solid var(--hairline); background: var(--card); color: var(--ink-2); cursor: pointer; }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #0c1611; }
+  #daysum { font-size: 13px; color: var(--muted); margin: .4rem 0 .8rem; }
+  #daysum b { color: var(--ink); }
+
+  .evt { background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: .75rem .95rem; margin-bottom: .55rem; cursor: pointer; }
+  .evt.k-personal { opacity: .45; } .evt.k-task { border-style: dashed; }
+  .evt.k-intro { opacity: .8; }
+  .evt.flagged { border-left: 3px solid var(--warn); }
+  .evt-top { display: flex; gap: .7rem; align-items: baseline; }
+  .t { flex: none; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; width: 42px; }
+  .title { font-weight: 600; font-size: 14.5px; line-height: 1.35; }
+  .done { margin-left: auto; flex: none; color: var(--accent); font-size: 12px; font-weight: 600; }
+  .chiprow { margin: .4rem 0 0 52px; display: flex; gap: .35rem; flex-wrap: wrap; }
+  .cochip { font-size: 11px; font-weight: 600; border: 1px solid; border-radius: 999px; padding: .12rem .55rem; }
+  .flagline { margin: .35rem 0 0 52px; font-size: 12px; color: var(--warn); font-weight: 600; }
+
+  .brief { display: none; margin: .7rem 0 .2rem 0; border-top: 1px solid var(--hairline); padding-top: .7rem; cursor: default; }
+  .brief.open { display: grid; gap: .55rem; }
+  .c-int { font-size: 13.5px; color: var(--ink-2); background: var(--card-2); border-radius: 10px; padding: .6rem .8rem; }
+  .c-int b { color: var(--ink); }
+  .intel { font-size: 12.5px; color: var(--muted); margin-top: .2rem; }
+  .known { font-size: 12.5px; color: var(--violet); margin-top: .3rem; }
+  .unknown { color: var(--muted); font-style: italic; }
+  .prep { font-size: 13.5px; color: var(--ink-2); }
+  .muted2 { color: var(--muted); font-style: italic; }
+  .stale { font-size: 13px; color: var(--warn); background: rgba(217,164,65,.08); border-radius: 8px; padding: .55rem .8rem; }
+  .flagbox { font-size: 13px; color: var(--warn); border-left: 3px solid var(--warn); padding: .4rem .8rem; }
+
+  .capture { border-top: 1px dashed var(--hairline); padding-top: .6rem; }
+  .cap-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .cap-row { display: flex; gap: .45rem; margin: .45rem 0; }
+  .score { flex: 1; font: 700 15px system-ui; padding: .5rem 0; border-radius: 8px; border: 1px solid var(--hairline); background: var(--card-2); color: var(--ink-2); cursor: pointer; }
+  .score.sel { background: var(--accent); border-color: var(--accent); color: #0c1611; }
+  .cap-why { display: flex; gap: .45rem; }
+  .cap-why input { flex: 1; font: 14px system-ui; background: var(--card-2); border: 1px solid var(--hairline); border-radius: 8px; padding: .55rem .7rem; color: var(--ink); }
+  .cap-why input::placeholder { color: var(--muted); }
+  .mic2 { width: 44px; font-size: 16px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--card-2); color: var(--ink); cursor: pointer; }
+  .mic2.rec { border-color: var(--no); color: var(--no); animation: pulse 1.1s infinite; }
+  @keyframes pulse { 50% { opacity: .4; } }
+  .foot { margin-top: 1rem; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>This Week <span>· the Intern rides along</span></h1>
+      <a href="index.html">→ training deck</a>
+    </header>
+    <div id="tabs"></div>
+    <div id="daysum"></div>
+    <div id="list"></div>
+    <div class="foot">Week of Aug 17 · transcribed from your calendar (ICS import next) · captures land in the same training log as the deck · everything stays on this machine</div>
+  </div>
+  <script src="pool.js"></script>
+  <script src="week.js"></script>
+</body>
+</html>
