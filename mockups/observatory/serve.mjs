@@ -24,9 +24,13 @@ const { pipeline } = await import("@xenova/transformers");
 const fe = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", { quantized: true });
 console.log("ready.");
 
+const rowOf = new Map(Array.from(ids, (id, i) => [id, i]));
 async function search(q, k = 60) {
   const t = await fe([q], { pooling: "mean", normalize: true });
-  const qv = t.data;
+  return searchVec(t.data, k);
+}
+// "more like this": a fragment's own stored vector is the query — exact, no re-embedding
+function searchVec(qv, k = 60) {
   const scores = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     let s = 0; const o = i * D;
@@ -43,6 +47,20 @@ http.createServer(async (req, res) => {
   try {
     if (url.pathname === "/api/search") {
       const out = await search(url.searchParams.get("q") || "", +(url.searchParams.get("k") || 60));
+      res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify(out)); return;
+    }
+    if (url.pathname === "/api/frag") {
+      const f = byId.get(+url.searchParams.get("id"));
+      res.writeHead(f ? 200 : 404, { "content-type": "application/json" }); res.end(JSON.stringify(f || null)); return;
+    }
+    if (url.pathname === "/api/frags") {
+      const out = (url.searchParams.get("ids") || "").split(",").slice(0, 300).map(Number).map(id => byId.get(id)).filter(Boolean);
+      res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify(out)); return;
+    }
+    if (url.pathname === "/api/like") {
+      const r = rowOf.get(+url.searchParams.get("id"));
+      if (r === undefined) { res.writeHead(404); res.end("null"); return; }
+      const out = searchVec(M.subarray(r * D, (r + 1) * D), +(url.searchParams.get("k") || 60) + 1).filter(f => f.id !== ids[r]);
       res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify(out)); return;
     }
     if (url.pathname === "/api/person") {

@@ -24,7 +24,14 @@ node build_observatory.mjs   # regenerates data.js (people, PCA layout, dust, ca
 - **Stars** = the 160 people Jacob addresses most (≥4 mentions over 13 years), sized by
   mention count, **positioned by semantic PCA of their fragment centroids** — people he
   talks to about similar things sit near each other.
-- **Dust** = all 18,160 fragments projected into the same space.
+- **Dust** = all 18,160 fragments projected into the same space. **Hover** any dot to read it;
+  **click** to open it with its date, who it was said to, and **✦ More like this** — which
+  lights everything similar using that fragment's own vector (no search words needed).
+- **Topic captions** (violet) = 18 subjects he keeps returning to, found by clustering
+  substantive fragments by meaning (`regions.json` holds the hand-written captions; after a
+  capsule rebuild, reread `.regions-review.json` and relabel). Captions yield to each other,
+  so more appear as you zoom. **Click one** to light its members and see who the topic belongs
+  to — a topic with few people in the answer is one he talks about but nobody owns.
 - **Search** lights matching fragments, draws lines to whoever each was said to, and the
   panel ranks "who this topic belongs to" — search is the question, *people are the answer*.
 - **Amber ring** = on this week's calendar. **Timeline** = fragments/year (sqrt scale),
@@ -32,7 +39,7 @@ node build_observatory.mjs   # regenerates data.js (people, PCA layout, dust, ca
 - **Click a star**: mentions, span, per-year sparkline, roster role + message stats
   (Intern pool), seed judgments from the voice pass, this week's meetings, and their
   actual fragments from the capsule.
-- Drag to pan, scroll to zoom, `#q=...` deep-links a search.
+- Drag to pan, scroll to zoom, `#q=...` deep-links a search. `#frag=<id>` opens one fragment; `#topic=<k>` lights a topic.
 - **⚑ This week's calendar** (header button): the full Mon–Fri meeting list from the
   trainer's week demo, with the intern's prep notes and ask-stacking flags. Click a
   meeting → attendees who live in the sky get an amber beacon and all fragments Jacob

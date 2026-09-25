@@ -101,6 +101,55 @@ for (const f of frags) {
   dust.id.push(f.id);
 }
 
+// ---- regions: topic clusters, captioned on the map ----
+// k-means in meaning-space (384-d) over substantive fragments — small talk, bare links and
+// name lists are left out so they can't swamp the topics. Each region sits at the median of
+// its members on the map; `seed` is its most typical fragment (clicking a label runs
+// "more like this" from it). Deterministic, so labels in regions.json stay attached to the
+// same clusters until the capsule changes — then review .regions-review.json and relabel.
+const RK = 18;
+const byIdFrag = new Map(frags.map(f => [f.id, f]));
+const sub = [];
+for (let i = 0; i < dust.id.length; i++) {
+  const t = byIdFrag.get(dust.id[i]).text, words = t.split(/\s+/).length;
+  if (t.length >= 60 && words >= 10 && (t.match(/\b[A-Z][a-z]+/g) || []).length / words < 0.45 && !/^https?:/.test(t)) sub.push(i);
+}
+const X = sub.map(i => V.get(dust.id[i]));
+const dotv = (a, b) => { let s = 0; for (let j = 0; j < D; j++) s += a[j] * b[j]; return s; };
+let rs = 7; const rnd = () => (rs = (rs * 1103515245 + 12345) % 2147483648) / 2147483648;
+let RC = [X[0].slice()];
+while (RC.length < RK) { // k-means++ seeding (deterministic RNG)
+  const d = X.map(x => 1 - Math.max(...RC.map(c => dotv(x, c))));
+  let r = rnd() * d.reduce((p, q) => p + q, 0), j = 0;
+  while ((r -= d[j]) > 0 && j < d.length - 1) j++;
+  RC.push(X[j].slice());
+}
+let RA = [];
+for (let it = 0; it < 25; it++) {
+  RA = X.map(x => { let b = 0, bs = -9; RC.forEach((c, k) => { const v = dotv(x, c); if (v > bs) { bs = v; b = k; } }); return b; });
+  RC = RC.map((c, k) => {
+    const n = new Array(D).fill(0); let cnt = 0;
+    X.forEach((x, j) => { if (RA[j] === k) { cnt++; for (let q = 0; q < D; q++) n[q] += x[q]; } });
+    if (!cnt) return c; const L = Math.hypot(...n); return n.map(v => v / L);
+  });
+}
+const regionsFile = path.join(ROOT, "mockups/observatory/regions.json");
+const labels = fs.existsSync(regionsFile) ? JSON.parse(fs.readFileSync(regionsFile, "utf8")).labels || [] : [];
+const med = (a) => [...a].sort((p, q) => p - q)[a.length >> 1];
+const review = [];
+const REGIONS = RC.map((c, k) => {
+  const mem = sub.filter((_, j) => RA[j] === k);
+  const typical = mem.map(i => [dotv(V.get(dust.id[i]), c), i]).sort((p, q) => q[0] - p[0]);
+  review.push({ k, n: mem.length, samples: typical.slice(0, 10).map(([, i]) => byIdFrag.get(dust.id[i]).text.slice(0, 140)) });
+  return {
+    x: +(med(mem.map(i => dust.x[i])) / 500).toFixed(3), y: +(med(mem.map(i => dust.y[i])) / 500).toFixed(3),
+    n: mem.length, label: labels[k] || `topic ${k + 1}`,
+    members: typical.slice(0, 250).map(([, i]) => dust.id[i]), // most typical first
+  };
+});
+fs.writeFileSync(path.join(ROOT, "mockups/observatory/.regions-review.json"), JSON.stringify(review, null, 1));
+console.log("regions:", REGIONS.length, "from", sub.length, "substantive fragments", labels.length ? "(labeled)" : "(unlabeled — see .regions-review.json)");
+
 // ---- intern pool + seed judgments + calendar links ----
 const poolSrc = fs.readFileSync(path.join(ROOT, "mockups/trainer/pool.js"), "utf8");
 (0, eval)(poolSrc + ";globalThis.POOL=POOL;");
@@ -166,6 +215,7 @@ fs.writeFileSync(path.join(ROOT, "mockups/observatory/data.js"),
   "const DUST = " + JSON.stringify(dust) + ";\n" +
   "const MEETINGS = " + JSON.stringify(MEETINGS) + ";\n" +
   "const WEEK_START = " + JSON.stringify(WEEK_START) + ";\n" +
+  "const REGIONS = " + JSON.stringify(REGIONS) + ";\n" +
   "const YEAR0 = 2013, YEARS = 14;\n");
 const size = fs.statSync(path.join(ROOT, "mockups/observatory/data.js")).size;
 console.log("data.js written:", (size / 1024).toFixed(0) + "KB",

@@ -47,7 +47,7 @@ let t = 0;
 let focusPpl = null;         // Set of person indices from a focused meeting
 let focusDust = null;        // [[nx,ny]] fragments addressed to focused attendees
 
-function applySearch(list) {
+function applySearch(list, label) {
   results = list;
   hitByPerson = new Map();
   litPoints = [];
@@ -59,7 +59,7 @@ function applySearch(list) {
     if (pi >= 0) hitByPerson.set(pi, (hitByPerson.get(pi) || 0) + 1);
   }
   drawTimeline();
-  renderSearchPanel();
+  renderSearchPanel(label);
   $("#clear").style.display = "inline-block";
   $("#status").innerHTML = `<b>${list.length}</b> fragments lit · <b>${hitByPerson.size}</b> people in the answer`;
 }
@@ -107,6 +107,8 @@ function draw() {
     }
   }
 
+  drawDustHover();
+
   // people stars
   ctx.font = "11px system-ui, sans-serif";
   for (const p of PEOPLE) {
@@ -141,6 +143,7 @@ function draw() {
       ctx.fillText(p.name + (hits ? " · " + hits : ""), x + 8, y + 3.5);
     }
   }
+  drawRegions(); // captions on top, haloed so star names don't swallow them
   requestAnimationFrame(draw);
 }
 
@@ -203,12 +206,12 @@ async function openPerson(p) {
     `<div class="frag"><span class="d">${f.date}</span> ${esc(f.text.slice(0, 160))} ${f.url ? `<a href="${f.url}" target="_blank">↗</a>` : ""}</div>`).join("") || `<div class="sub">nothing on file</div>`;
 }
 
-function renderSearchPanel() {
+function renderSearchPanel(label) {
   selected = null;
   panel.classList.add("show"); $("#timeline").classList.remove("wide");
   const ranked = [...hitByPerson.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
   panel.innerHTML = `<button class="x" onclick="closePanel()">×</button>
-    <h2>“${esc($("#q").value)}”</h2>
+    <h2>${esc(label || "“" + $("#q").value + "”")}</h2>
     <div class="sub">what the capsule holds on this</div>
     ${ranked.length ? `<div class="sect">Who this topic belongs to</div>` : ""}
     ${ranked.map(([pi, n]) => `<div class="p-hit" data-pi="${pi}"><span>${PEOPLE[pi].name}${PEOPLE[pi].cal.length || calPplSet.has(pi) ? " ⚑" : ""}</span><b>${n}</b></div>`).join("")}
@@ -257,9 +260,14 @@ sky.addEventListener("mousemove", (e) => {
   }
   const p = hitPerson(e.clientX, e.clientY);
   hover = p ? p.i : null;
-  sky.style.cursor = p ? "pointer" : "default";
+  hoverRegion = p ? null : hitRegion(e.clientX, e.clientY);
+  const di = p || hoverRegion ? -1 : hitDust(e.clientX, e.clientY);
+  const newDust = di !== hoverDust; hoverDust = di;
+  sky.style.cursor = p || hoverRegion || di >= 0 ? "pointer" : "default";
   const tip = $("#tip");
-  if (p) {
+  if (hoverRegion) regionTip(hoverRegion, e, tip);
+  else if (di >= 0) { if (newDust) dustTip(di, e, tip); else { tip.style.left = Math.min(e.clientX + 14, innerWidth - 270) + "px"; tip.style.top = e.clientY + 12 + "px"; } }
+  else if (p) {
     tip.style.display = "block";
     tip.style.left = Math.min(e.clientX + 14, innerWidth - 270) + "px";
     tip.style.top = e.clientY + 12 + "px";
@@ -269,7 +277,11 @@ sky.addEventListener("mousemove", (e) => {
 sky.addEventListener("click", (e) => {
   if (moved) return;
   const p = hitPerson(e.clientX, e.clientY);
-  if (p) openPerson(p);
+  if (p) return openPerson(p);
+  const r = hitRegion(e.clientX, e.clientY);
+  if (r) return topicSearch(r);
+  const di = hitDust(e.clientX, e.clientY);
+  if (di >= 0) openFragment(di);
 });
 sky.addEventListener("wheel", (e) => {
   e.preventDefault();
@@ -450,6 +462,8 @@ draw();
 const hp = new URLSearchParams(location.hash.slice(1));
 const hq = hp.get("q");
 if (hq) { $("#q").value = hq; doSearch(); }
+if (hp.get("frag") && dustIndexById.has(+hp.get("frag"))) openFragment(dustIndexById.get(+hp.get("frag")));
+if (hp.get("topic") != null && typeof REGIONS !== "undefined" && REGIONS[+hp.get("topic")]) topicSearch(REGIONS[+hp.get("topic")]);
 if (hp.get("cal") || hp.get("m") != null) toggleCal(true);
 if (hp.get("m") != null && MEETINGS[+hp.get("m")]) {
   const i = +hp.get("m");

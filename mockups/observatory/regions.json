@@ -1,0 +1,23 @@
+{
+  "note": "Captions for the topic regions, by cluster index from build_observatory.mjs. After a capsule rebuild, re-read .regions-review.json and relabel. Topics only — never a person's name.",
+  "labels": [
+    "Shoutouts & amplifying others",
+    "Purpose, mindset & growth",
+    "School budgets & funding",
+    "Startups, markets & strategy",
+    "Travel & conference life",
+    "Sales & business development",
+    "Small-world catch-ups",
+    "AI in education policy",
+    "Parenting & his kids",
+    "Data breaches & student privacy",
+    "Following up & offering help",
+    "Reading, podcasts & tools",
+    "Making introductions",
+    "Pointing people to people",
+    "Tutoring & student outcomes",
+    "LinkedIn itself",
+    "Banter: shoes, coffee, yoga",
+    "Work culture & burnout"
+  ]
+}
