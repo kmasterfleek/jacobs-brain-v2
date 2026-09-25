@@ -111,6 +111,7 @@ function draw() {
 
   // people stars
   ctx.font = "11px system-ui, sans-serif";
+  const named = starLabels(); // which names get drawn this frame (decluttered)
   for (const p of PEOPLE) {
     const [x, y] = toScreen(p.x, p.y);
     if (x < -60 || x > W + 60 || y < -30 || y > H + 30) continue;
@@ -137,8 +138,7 @@ function draw() {
       ctx.strokeStyle = "rgba(217,164,65,0.9)"; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.arc(x, y, pr, 0, 7); ctx.stroke();
     }
-    const showLabel = p.n >= 40 || hits || foc || hover === p.i || (selected && selected.i === p.i) || T.k > 2;
-    if (showLabel) {
+    if (named.has(p.i)) {
       ctx.fillStyle = hits ? "rgba(155,225,195,.95)" : foc ? "rgba(235,197,122,.95)" : `rgba(195,194,183,${0.8 * dim})`;
       ctx.fillText(p.name + (hits ? " · " + hits : ""), x + 8, y + 3.5);
     }
@@ -454,6 +454,7 @@ window.toggleCal = toggleCal;
 calBtn.onclick = () => toggleCal();
 
 window.addEventListener("resize", resize);
+renderViewbar();
 resize();
 drawTimeline();
 draw();

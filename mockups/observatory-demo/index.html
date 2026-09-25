@@ -44,7 +44,14 @@
   #status { position: fixed; top: 96px; left: 16px; z-index: 9; font-size: 12.5px; color: var(--muted); }
   #status b { color: var(--accent); }
   body.calopen #status { left: 372px; }
-  body.calopen #legend { display: none; }
+  body.calopen #legend, body.calopen #viewbar { display: none !important; }
+  #viewbar { position: fixed; left: 16px; bottom: 96px; z-index: 8; display: flex; gap: 4px; align-items: center;
+    background: rgba(13,13,13,.55); padding: 4px; border-radius: 999px; }
+  #viewbar .vlabel { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 6px 0 8px; }
+  .vbtn { font: 12px system-ui; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--hairline);
+    background: transparent; color: var(--muted); cursor: pointer; }
+  .vbtn.on { color: var(--ink); border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.06); }
+  .vbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   #calbtn { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--warn); background: transparent;
     color: var(--warn); font: 600 13px system-ui; cursor: pointer; white-space: nowrap; }
@@ -135,7 +142,7 @@
   #tl-label { font-size: 10.5px; color: var(--muted); letter-spacing: .06em; }
   #tl { width: 100%; height: 52px; }
 
-  #legend { position: fixed; left: 16px; bottom: 96px; z-index: 8; font-size: 11.5px; color: var(--muted);
+  #legend { position: fixed; left: 16px; bottom: 134px; z-index: 8; font-size: 11.5px; color: var(--muted);
     line-height: 1.8; background: rgba(13,13,13,.55); padding: 8px 12px; border-radius: 10px; }
   #tip { position: fixed; z-index: 30; display: none; max-width: 260px; padding: 8px 11px; border-radius: 8px;
     background: var(--panel); border: 1px solid var(--hairline); font-size: 12.5px; pointer-events: none;
@@ -162,13 +169,14 @@
   <div id="tip"></div>
   <aside id="panel"></aside>
 
-  <div id="legend">
+  <div id="viewbar" role="toolbar" aria-label="What to show on the map"></div>
+  <div id="legend" style="display:none">
     ✦ star = someone Jacob addresses (size = how often, 13yrs)<br>
     · dust = one thing Jacob wrote, placed by meaning — hover to read, click for more like it<br>
     <span style="color:var(--violet)">TOPIC</span> = a subject he keeps coming back to — click to light it<br>
     <span style="color:var(--accent)">●</span> lit = matches your search · lines → who it was said to<br>
     <span style="color:var(--warn)">⚑ amber</span> = this week's calendar — click a meeting to light its people<br>
-    drag to pan · scroll to zoom · click a star
+    drag to pan · scroll to zoom · click a star · T / N / K toggle
   </div>
 
   <div id="timeline" class="wide">

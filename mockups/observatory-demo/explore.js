@@ -2,6 +2,54 @@
 // captioned on the map. Loaded before app.js — everything here is called at event/draw
 // time, when app.js globals (toScreen, T, R, CX, CY, ctx, panel…) exist.
 
+// ---------- view toggles: Topics / Names / Key (remembered per viewer) ----------
+const LSVIEW = "dodo-observatory-view-v1";
+let VIEW = { topics: true, names: true, key: false };
+try { Object.assign(VIEW, JSON.parse(localStorage.getItem(LSVIEW) || "{}")); } catch {}
+function setView(k, v) {
+  VIEW[k] = v === undefined ? !VIEW[k] : v;
+  try { localStorage.setItem(LSVIEW, JSON.stringify(VIEW)); } catch {}
+  renderViewbar();
+}
+function renderViewbar() {
+  const bar = document.getElementById("viewbar");
+  if (!bar) return;
+  bar.innerHTML = `<span class="vlabel">Show</span>` + [["topics", "Topics", "T"], ["names", "Names", "N"], ["key", "Key", "K"]]
+    .map(([k, l, s]) => `<button class="vbtn ${VIEW[k] ? "on" : ""}" data-k="${k}" title="toggle ${l.toLowerCase()} (${s})" aria-pressed="${VIEW[k]}">${l}</button>`).join("");
+  bar.querySelectorAll(".vbtn").forEach(b => b.onclick = () => setView(b.dataset.k));
+  document.getElementById("legend").style.display = VIEW.key ? "" : "none";
+}
+window.addEventListener("keydown", (e) => {
+  if (e.target.closest("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = { t: "topics", n: "names", k: "key" }[e.key.toLowerCase()];
+  if (k) setView(k);
+});
+
+// names yield to each other like topic captions: ~10 at full view, more as you zoom.
+// Whatever is lit (search hits, meeting attendees, hover, selection) is always named.
+function starLabels() {
+  const out = new Set(), boxes = VIEW.topics && !(hitByPerson || focusPpl) ? regionBoxes.map(b => ({ ...b })) : []; // make room for topic captions
+  const place = (p, force) => {
+    const [x, y] = toScreen(p.x, p.y);
+    if (x < -60 || x > W + 60 || y < -30 || y > H + 30) return;
+    const w = ctx.measureText(p.name).width + 8, b = { x: x + 6, y: y - 7, w, h: 14 };
+    if (!force && boxes.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y)) return;
+    boxes.push(b); out.add(p.i);
+  };
+  const lit = hitByPerson || focusPpl;
+  for (const p of PEOPLE) {
+    if ((hitByPerson && hitByPerson.get(p.i)) || (focusPpl && focusPpl.has(p.i)) || hover === p.i || (selected && selected.i === p.i)) place(p, true);
+  }
+  if (VIEW.names && !lit) {
+    let budget = Math.round(10 * T.k * T.k);
+    for (const p of [...PEOPLE].sort((a, b) => b.n - a.n)) {
+      if (budget <= 0) break;
+      if (!out.has(p.i)) { const before = out.size; place(p, false); if (out.size > before) budget--; }
+    }
+  }
+  return out;
+}
+
 // ---------- spatial index over dust (normalized coords, 0.02 cells) ----------
 const DCELL = 0.02, dustGrid = new Map();
 for (let i = 0; i < DUST.x.length; i++) {
@@ -78,10 +126,12 @@ async function likeSearch(id, label) {
 let regionBoxes = [];
 function drawRegions() {
   regionBoxes = [];
-  if (typeof REGIONS === "undefined") return;
+  if (typeof REGIONS === "undefined" || !VIEW.topics || hitByPerson || focusPpl) return; // step back while an answer is lit
   ctx.font = "600 10.5px system-ui, sans-serif";
   const placed = [];
+  let budget = Math.round(6 * T.k);
   for (const r of [...REGIONS].sort((a, b) => b.n - a.n)) {
+    if (placed.length >= budget) break;
     const [x, y] = toScreen(r.x, r.y);
     const txt = r.label.toUpperCase(), w = ctx.measureText(txt).width + txt.length * 1.2, h = 14;
     const box = { x: x - w / 2, y: y - h / 2, w, h, r };
@@ -89,7 +139,7 @@ function drawRegions() {
     if (placed.some(b => box.x < b.x + b.w + 10 && box.x + w + 10 > b.x && box.y < b.y + b.h + 6 && box.y + h + 6 > b.y)) continue;
     placed.push(box);
     const hot = hoverRegion === r;
-    ctx.fillStyle = hot ? "rgba(197,189,245,.95)" : `rgba(157,147,230,${hitByPerson || focusPpl ? 0.35 : 0.62})`;
+    ctx.fillStyle = hot ? "rgba(197,189,245,.95)" : "rgba(157,147,230,.62)";
     ctx.letterSpacing = "1.2px";
     ctx.lineWidth = 3.5; ctx.strokeStyle = "rgba(13,13,13,.9)"; ctx.lineJoin = "round";
     ctx.strokeText(txt, box.x, y + 4);

@@ -39,6 +39,9 @@ node build_observatory.mjs   # regenerates data.js (people, PCA layout, dust, ca
 - **Click a star**: mentions, span, per-year sparkline, roster role + message stats
   (Intern pool), seed judgments from the voice pass, this week's meetings, and their
   actual fragments from the capsule.
+- **Show: Topics / Names / Key** (bottom-left, or press T / N / K) — remembered per viewer. Names and
+  topics yield to each other (~10 names and 6 topics at full view, more as you zoom); while a
+  search or meeting is lit, only the answer is named and topic captions step back.
 - Drag to pan, scroll to zoom, `#q=...` deep-links a search. `#frag=<id>` opens one fragment; `#topic=<k>` lights a topic.
 - **⚑ This week's calendar** (header button): the full Mon–Fri meeting list from the
   trainer's week demo, with the intern's prep notes and ask-stacking flags. Click a
