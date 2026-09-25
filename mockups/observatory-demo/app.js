@@ -129,7 +129,7 @@ function draw() {
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, glowR, 0, 7); ctx.fill();
     ctx.fillStyle = `rgba(255,255,255,${0.92 * dim})`;
     ctx.beginPath(); ctx.arc(x, y, Math.min(r, 5), 0, 7); ctx.fill();
-    if (p.cal.length || calPplSet.has(p.i)) { // on this week's calendar (matched or Jacob-added)
+    if (calOpen && dayPplSet.has(p.i)) { // on the calendar day being viewed (matched or Jacob-added)
       ctx.strokeStyle = `rgba(217,164,65,${0.85 * dim})`; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.arc(x, y, Math.min(r, 5) + 4, 0, 7); ctx.stroke();
     }
@@ -379,8 +379,10 @@ const contactIsStar = (c, ppl) => {
   return ppl.some(pi => { const k = norm(PEOPLE[pi].name); return k === ck || (k.split(" ")[0] === cf && k.includes(cl)); });
 };
 
+let dayPplSet = new Set(); // stars in the viewed day's meetings — drives the amber ring
 function renderCal() {
   const list = MEETINGS.map((m, i) => ({ m, i })).filter(x => x.m.day === calDay);
+  dayPplSet = new Set(list.flatMap(({ m }) => mppl(m)));
   calEl.innerHTML = `<button class="x" onclick="toggleCal(false)">×</button>
     <h3>⚑ This week · ${WEEK_LABEL}</h3>
     <div class="daytabs">${CAL_DAYS.map((d, i) => `<button class="daytab ${i === calDay ? "on" : ""}" data-d="${i}">${d}</button>`).join("")}</div>

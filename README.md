@@ -73,7 +73,7 @@ Then give the user both URLs:
 |------|-----------|
 | `mockups/observatory/` | The Observatory: capsule as a navigable sky + calendar (see its README) |
 | `mockups/constellation/` | The Constellation: ring visualization + Dojo rehearsal (demo data, do not modify) |
-| `mockups/observatory-demo/` | Guided-demo Observatory: identical to the real one with every name pseudonymized (`node build_demo.mjs` regenerates; `node serve.mjs` → :8476). Jacob and Kunal stay real. Don't click ↗ links live — they open the real posts. |
+| `mockups/observatory-demo/` | Guided-demo Observatory: identical to the real one with every name pseudonymized (`node build_demo.mjs` regenerates; `node serve.mjs` → :8476). Jacob and Kunal stay real. The calendar is cast onto the demo sky (`demo_calendar.mjs`): every meeting has at least one star, chosen by meaning, with one real person → one star all week; personal entries become "Coffee catch-up". Don't click ↗ links live — they open the real posts. |
 | `mockups/trainer/` | The Intern trainer (`index.html`) + week demo (`week.html`) — open as static pages |
 | `tools/voiceprint/` | LinkedIn Comments.csv → RVF vector capsule pipeline (see its README) |
 | `tools/voiceprint/jacob-capsule/` | Jacob's built capsule: 18,160 fragment vectors, 2013→2026 |
