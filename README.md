@@ -1,14 +1,34 @@
 # Jacob's Brain — DODO 2.0 workspace
 
 Private workspace of tools built around Jacob Kantor's network: his 13 years of
-LinkedIn commentary vectorized into a searchable capsule, plus three browser apps
-for exploring it. **This repo contains real names and candid notes — keep it
-private, never publish or screenshot without blurring names.**
+LinkedIn commentary vectorized into a searchable capsule, plus browser apps for
+exploring it. **This contains real names and candid notes — keep it on your own
+computer, never share the folder, and blur names in any screenshot.**
+
+## Jacob — start here (about 10 minutes, once)
+
+1. On the GitHub page for this project, click the green **Code** button → **Download ZIP**.
+2. Double-click the ZIP to unzip it. Move the folder somewhere you'll find it again
+   (Documents is fine).
+3. Open **Claude Code** in that folder, and type:
+
+   > Read the README and get everything running.
+
+4. Claude will install what's needed and hand you a link. Open it — a short guided tour
+   starts on its own and walks you through everything.
+
+Next time, just open Claude Code in the same folder and say *"start the Observatory"*.
 
 ## For Claude Code: set this up and get it running
 
 If you are Claude Code and a user pointed you here, do the following. The goal is
 both visualizations running and their URLs handed to the user.
+
+This folder most likely came from GitHub's **Download ZIP** (named like
+`jacobs-brain-v2-main`): there is no git history and none is needed — don't run git
+commands, don't try to push anything, and don't upload or paste this data anywhere.
+The user is not technical: do every step yourself, keep your messages short and plain,
+and ask them only for things you truly can't do (like approving an install).
 
 ### 1. Check prerequisites
 
@@ -16,7 +36,10 @@ both visualizations running and their URLs handed to the user.
 - `python3 --version` — any Python 3
 - Internet access on first run (a ~30MB embedding model downloads once)
 
-If Node is missing on macOS, install it (e.g. `brew install node`) or ask the user.
+If Node is missing: on macOS use `brew install node` if Homebrew exists; otherwise send the
+user to https://nodejs.org (the LTS installer — download, double-click, Continue through it),
+wait for them to say it's done, then continue. Python 3 is only needed for the Constellation;
+if it's missing, skip that app and say so.
 
 ### 2. One-time setup
 
@@ -50,13 +73,18 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8475/    # expect 200
 curl -s "http://127.0.0.1:8474/api/search?q=rural%20schools&k=1"   # expect JSON with a score
 ```
 
-Then give the user both URLs:
+Then open the Observatory in their browser (`open http://127.0.0.1:8474` on macOS) and give them both URLs:
 
 - **The Observatory** → http://127.0.0.1:8474 — a guided tour starts automatically on the
   first visit and walks through everything (replay anytime with "? Tour"); tell the user to
   just open the link and follow it
 - **The Constellation** → http://127.0.0.1:8475 — the ring/Dojo mockup
   (demo deep link: `http://127.0.0.1:8475/#co=zen&sel=eric-brooks&dojo=1&opener=theirs`)
+
+### Later sessions
+
+If the user asks to "start the Observatory" (or anything like it): the setup is already
+done — skip to step 3, start the servers, verify, and open the link.
 
 ### Troubleshooting
 
@@ -80,7 +108,7 @@ Then give the user both URLs:
 | `tools/voiceprint/jacob-capsule/` | Jacob's built capsule: 18,160 fragment vectors, 2013→2026 |
 | `raw-data/` | Roster CSVs + LinkedIn export. **Read `raw-data/CAVEATS.md` before touching this.** |
 | `docs/` | DODO 2.0 direction + client matchboard |
-| `RuVector-main/crates/rvf` | Vendored rvf crate — only needed to rebuild capsules (`cargo build -p rvf-cli --release`) |
+| `RuVector-main/crates/rvf` | Vendored rvf crate — only needed to rebuild capsules (`cargo build -p rvf-cli --release`). Not included in the ZIP download. |
 
 ## Privacy rules (non-negotiable)
 

@@ -1,0 +1,7 @@
+# Kept in the repo, left out of GitHub's "Download ZIP": the ZIP is what Jacob runs, and
+# these are Kunal's own Claude Code / tooling config (and upstream source not needed to run).
+CLAUDE.md export-ignore
+.claude/ export-ignore
+.claude-flow/ export-ignore
+.mcp.json export-ignore
+RuVector-main/ export-ignore
