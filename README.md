@@ -52,8 +52,9 @@ curl -s "http://127.0.0.1:8474/api/search?q=rural%20schools&k=1"   # expect JSON
 
 Then give the user both URLs:
 
-- **The Observatory** → http://127.0.0.1:8474 — search the capsule, open the
-  "⚑ This week's calendar" drawer, click a meeting to light up its people
+- **The Observatory** → http://127.0.0.1:8474 — a guided tour starts automatically on the
+  first visit and walks through everything (replay anytime with "? Tour"); tell the user to
+  just open the link and follow it
 - **The Constellation** → http://127.0.0.1:8475 — the ring/Dojo mockup
   (demo deep link: `http://127.0.0.1:8475/#co=zen&sel=eric-brooks&dojo=1&opener=theirs`)
 

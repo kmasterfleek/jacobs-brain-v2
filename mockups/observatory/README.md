@@ -19,6 +19,15 @@ queries live with the same MiniLM model that built it. `node_modules` is symlink
 node build_observatory.mjs   # regenerates data.js (people, PCA layout, dust, calendar links)
 ```
 
+## First visit: the guided tour
+
+A 13-step tour runs automatically the first time the page opens in a browser: it spotlights
+each part (stars, a person's card, dust, topics, the Show toggles, the calendar, a meeting,
+the add-someone box, semantic search) and asks the viewer to actually click each thing — the
+step advances when they do. The last interactive step runs a pre-filled example search
+("teachers leaving the profession"). Replay anytime with **? Tour** in the header, or `#tour`
+(`#tour=N` jumps to step N). Esc or "Skip tour" ends it.
+
 ## What's on screen
 
 - **Stars** = the 160 people Jacob addresses most (≥4 mentions over 13 years), sized by
