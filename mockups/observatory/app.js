@@ -213,10 +213,11 @@ function renderSearchPanel() {
     ${ranked.length ? `<div class="sect">Who this topic belongs to</div>` : ""}
     ${ranked.map(([pi, n]) => `<div class="p-hit" data-pi="${pi}"><span>${PEOPLE[pi].name}${PEOPLE[pi].cal.length || calPplSet.has(pi) ? " ⚑" : ""}</span><b>${n}</b></div>`).join("")}
     <div class="sect">Strongest fragments</div>
-    ${results.slice(0, 12).map(r => `<div class="frag hit"><span class="d">${r.date}${r.addressed ? " · → " + esc(r.addressed) : ""}</span> ${esc(r.text.slice(0, 170))} ${r.url ? `<a href="${r.url}" target="_blank">↗</a>` : ""}</div>`).join("")}`;
+    ${results.slice(0, 12).map(r => `<div class="frag hit"><span class="d">${r.date}${r.addressed && !SELF.test(r.addressed) ? " · → " + esc(r.addressed) : ""}</span> ${esc(r.text.slice(0, 170))} ${r.url ? `<a href="${r.url}" target="_blank">↗</a>` : ""}</div>`).join("")}`;
   panel.querySelectorAll(".p-hit").forEach(el => el.onclick = () => openPerson(PEOPLE[+el.dataset.pi]));
 }
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const SELF = /^jacob kantor/i; // replies in his own threads aren't "said to" anyone
 
 // ---------- search ----------
 const EXAMPLES = ["special education staffing", "AI in the classroom", "rural schools", "math tutoring", "podcast guests", "conference speaking"];
@@ -283,9 +284,15 @@ sky.addEventListener("wheel", (e) => {
 
 // ---------- this week's calendar ----------
 const calEl = $("#cal"), calBtn = $("#calbtn");
-const CAL_DAYS = ["Mon 17", "Tue 18", "Wed 19", "Thu 20", "Fri 21"];
+// day labels come from the calendar's week start, so a new week's calendar just works
+const WK0 = new Date(WEEK_START + "T12:00:00");
+const wkDay = (i) => new Date(WK0.getTime() + i * 864e5);
+const CAL_DAYS = [0, 1, 2, 3, 4].map(i => wkDay(i).toLocaleDateString("en-US", { weekday: "short", day: "numeric" }).replace(/(\d+) (\w+)/, "$2 $1"));
+const WEEK_LABEL = wkDay(0).toLocaleDateString("en-US", { month: "short", day: "numeric" }) + "–" +
+  (wkDay(4).getMonth() === wkDay(0).getMonth() ? wkDay(4).getDate() : wkDay(4).toLocaleDateString("en-US", { month: "short", day: "numeric" }));
 let calOpen = false, openMtg = null;
-let calDay = Math.min(4, Math.max(0, (new Date().getDay() + 6) % 7)); // demo week: today's weekday
+const todayIdx = Math.floor((Date.now() - WK0.getTime() + 12 * 36e5) / 864e5);
+let calDay = todayIdx >= 0 && todayIdx <= 4 ? todayIdx : 0; // today if it's in the loaded week, else Monday
 
 // Jacob's manual attendee fixes — for people the name-matching missed (misspellings,
 // title-only mentions). Stored as normalized names so they survive data.js rebuilds.
@@ -363,7 +370,7 @@ const contactIsStar = (c, ppl) => {
 function renderCal() {
   const list = MEETINGS.map((m, i) => ({ m, i })).filter(x => x.m.day === calDay);
   calEl.innerHTML = `<button class="x" onclick="toggleCal(false)">×</button>
-    <h3>⚑ This week · Aug 17–21</h3>
+    <h3>⚑ This week · ${WEEK_LABEL}</h3>
     <div class="daytabs">${CAL_DAYS.map((d, i) => `<button class="daytab ${i === calDay ? "on" : ""}" data-d="${i}">${d}</button>`).join("")}</div>
     <div class="calhint">click a meeting — anyone from it who lives in the sky lights up amber. guess what it's about to light the fragments.</div>
     ${list.map(({ m, i }) => {

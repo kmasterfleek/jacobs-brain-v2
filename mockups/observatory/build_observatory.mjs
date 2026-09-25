@@ -50,7 +50,6 @@ function powerIter(rows, deflate) {
     const nv = new Float64Array(D);
     for (const r of rows) {
       let dot = 0; for (let i = 0; i < D; i++) dot += r[i] * v[i];
-      if (deflate) dot -= 0; // deflation handled by orthogonalizing v below
       for (let i = 0; i < D; i++) nv[i] += dot * r[i];
     }
     if (deflate) { // remove component along deflate
@@ -102,7 +101,7 @@ const SEED_NOTES = {
   "jeff piontek": "Connector into Clark County & NYC. Validator, not buyer.",
 };
 const weekSrc = fs.readFileSync(path.join(ROOT, "mockups/trainer/week.js"), "utf8");
-(0, eval)(weekSrc.split("// ---------------- app ----------------")[0] + ";globalThis.CAL=CAL;globalThis.CAL_COMPANIES=CAL_COMPANIES;");
+(0, eval)(weekSrc.split("// ---------------- app ----------------")[0] + ";globalThis.CAL=CAL;globalThis.CAL_COMPANIES=CAL_COMPANIES;globalThis.WEEK_START=typeof WEEK_START!=='undefined'?WEEK_START:'2026-08-17';");
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const calFor = (key) => CAL.filter(e => (e.contacts || []).some(c => {
   const ck = norm(c); return ck === key || (ck.split(" ")[0] === key.split(" ")[0] && key.includes(ck.split(" ").pop() || "@"));
@@ -156,6 +155,7 @@ fs.writeFileSync(path.join(ROOT, "mockups/observatory/data.js"),
   "const PEOPLE = " + JSON.stringify(OUT_PEOPLE) + ";\n" +
   "const DUST = " + JSON.stringify(dust) + ";\n" +
   "const MEETINGS = " + JSON.stringify(MEETINGS) + ";\n" +
+  "const WEEK_START = " + JSON.stringify(WEEK_START) + ";\n" +
   "const YEAR0 = 2013, YEARS = 14;\n");
 const size = fs.statSync(path.join(ROOT, "mockups/observatory/data.js")).size;
 console.log("data.js written:", (size / 1024).toFixed(0) + "KB",

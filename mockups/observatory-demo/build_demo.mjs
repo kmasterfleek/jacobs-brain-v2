@@ -73,7 +73,7 @@ const rosterCsv = fs.readFileSync(path.join(ROOT, "raw-data/roster/Cleaned up DO
 const rosterNames = rosterCsv.split("\n").slice(1).map(l => l.split(",")[0].trim()).filter(n => n && n.split(" ").length >= 2);
 
 const obsSrc = fs.readFileSync(path.join(ROOT, "mockups/observatory/data.js"), "utf8");
-(0, eval)(obsSrc + ";globalThis.PEOPLE=PEOPLE;globalThis.DUST=DUST;globalThis.MEETINGS=MEETINGS;globalThis.YEAR0=YEAR0;globalThis.YEARS=YEARS;");
+(0, eval)(obsSrc + ";globalThis.PEOPLE=PEOPLE;globalThis.DUST=DUST;globalThis.MEETINGS=MEETINGS;globalThis.YEAR0=YEAR0;globalThis.YEARS=YEARS;globalThis.WEEK_START=WEEK_START;");
 
 // names that appear in the calendar (titles, contacts, prep, flags) — hand-listed from week.js;
 // includes bare first names of team/family so nothing real leaks in a live demo
@@ -153,6 +153,7 @@ fs.writeFileSync(path.join(HERE, "data.js"),
   "const PEOPLE = " + JSON.stringify(demoPeople) + ";\n" +
   "const DUST = " + JSON.stringify(DUST) + ";\n" +
   "const MEETINGS = " + JSON.stringify(demoMeetings) + ";\n" +
+  "const WEEK_START = " + JSON.stringify(WEEK_START) + ";\n" +
   `const YEAR0 = ${YEAR0}, YEARS = ${YEARS};\n`);
 console.log("data.js written · sample:", PEOPLE.slice(0, 3).map(p => p.name + " → " + mapName(p.name)).join(" · "));
 

@@ -3,6 +3,8 @@
 // The intern preps each meeting from the files + learned judgments, warns on
 // ask-stacking, and captures a 10-second outcome after — same training log.
 
+const WEEK_START = "2026-08-17"; // Monday of the calendar below — update when a new week is loaded
+
 const CAL_COMPANIES = {
   studyfetch: { name: "Study Fetch", hue: "#5aa4e0" },
   upstart: { name: "Upstart Ed", hue: "#c987d8" },
@@ -107,7 +109,8 @@ const CAL = [
 ];
 
 // ---------------- app ----------------
-const DAYS = ["Mon 17", "Tue 18", "Wed 19", "Thu 20", "Fri 21"];
+const DAYS = [0, 1, 2, 3, 4].map(i => { const d = new Date(new Date(WEEK_START + "T12:00:00").getTime() + i * 864e5);
+  return d.toLocaleDateString("en-US", { weekday: "short" }) + " " + d.getDate(); });
 const $ = s => document.querySelector(s);
 const LSW = "dodo-intern-v1"; // shared store with the trainer
 let S = JSON.parse(localStorage.getItem(LSW) || "null") || { log: [], facts: {}, pairs: {}, globalRules: [], reasonCounts: {}, agree: 0, total: 0, seeded: true };
