@@ -28,7 +28,19 @@ for (const f of frags) {
   if (f.date > p.last) p.last = f.date;
 }
 const ranked = [...people.values()].sort((a, b) => b.n - a.n);
+// this week's calendar, loaded early: anyone on it (or named in its prep notes) who is in
+// the capsule at all joins the sky — the top-160 cut shouldn't hide who he's meeting
+const weekSrc = fs.readFileSync(path.join(ROOT, "mockups/trainer/week.js"), "utf8");
+(0, eval)(weekSrc.split("// ---------------- app ----------------")[0] + ";globalThis.CAL=CAL;globalThis.CAL_COMPANIES=CAL_COMPANIES;globalThis.WEEK_START=typeof WEEK_START!=='undefined'?WEEK_START:'2026-08-17';");
+const calText = " " + norm(CAL.map(e => [e.title, e.prep, e.flag, ...(e.contacts || [])].filter(Boolean).join(" ")).join(" ")).replace(/['’]s\b/g, "") + " ";
+const onCalendar = (p) => {
+  const kp = p.key.split(" "), f = kp[0], l = kp[kp.length - 1];
+  return kp.length <= 3 && f.length > 2 && l.length > 2 && p.name === p.name.replace(/\b[A-Z]{3,}\b/, "") && calText.includes(" " + p.key + " ");
+};
 const TOP = ranked.filter(p => p.n >= 4).slice(0, 160);
+const extra = ranked.filter(p => !TOP.includes(p) && onCalendar(p));
+TOP.push(...extra);
+console.log("added from this week's calendar:", extra.map(p => p.name + ":" + p.n).join(", ") || "none");
 console.log("people (≥4 mentions):", TOP.length, "| top:", TOP.slice(0, 3).map(p => p.name + ":" + p.n).join(", "));
 
 // ---- centroids + PCA ----
@@ -100,8 +112,6 @@ const SEED_NOTES = {
   "kiela jimenez": "Paid advisor — an instrument, not a pitch target.",
   "jeff piontek": "Connector into Clark County & NYC. Validator, not buyer.",
 };
-const weekSrc = fs.readFileSync(path.join(ROOT, "mockups/trainer/week.js"), "utf8");
-(0, eval)(weekSrc.split("// ---------------- app ----------------")[0] + ";globalThis.CAL=CAL;globalThis.CAL_COMPANIES=CAL_COMPANIES;globalThis.WEEK_START=typeof WEEK_START!=='undefined'?WEEK_START:'2026-08-17';");
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const calFor = (key) => CAL.filter(e => (e.contacts || []).some(c => {
   const ck = norm(c); return ck === key || (ck.split(" ")[0] === key.split(" ")[0] && key.includes(ck.split(" ").pop() || "@"));

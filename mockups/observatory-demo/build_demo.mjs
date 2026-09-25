@@ -83,6 +83,9 @@ const CAL_NAMES = `Jason Bell|Brad Mason|Whitney Smith|Whittney Smith|Sean Bulso
 |Megan Benay|Kiela Jimenez|Sam W.|Roberto|Eddi|Jeremy|Adella|Ira|Sara|Jenn|Levi|Luke|Gabe|Michael|Vinay|John|Wes|Patrick|Greg|Jeff|Steve
 |Piontek|Womble|Pratt|Gittisriboongul|Vigil|Brooks|Iglesias|Pake|Fernandez|Mason|Sanchez|Lawrence|Hoang|Mallison|Bulson`
   .split("|").map(s => s.trim()).filter(Boolean);
+// plus whatever week is loaded now: every meeting contact, and bare/truncated names seen in titles
+for (const m of MEETINGS) for (const c of m.contacts || []) if (!CAL_NAMES.includes(c)) CAL_NAMES.push(c);
+CAL_NAMES.push(..."Tom|Tony|Nathan|Mark|Ira|Jenn|Levi|Sam|Bobby|Koo|Whita|Afdahl|Isseks|Messinger|Koontz".split("|"));
 
 const dict = new Set();
 for (const [n, c] of count) {
@@ -125,8 +128,9 @@ const swapFull = (s) => s == null ? s : s.replace(fullRe, (m) => mapName(m));
 // calendar-only: also swap bare first/last tokens (team, family, "Piontek deferred", etc.)
 const calBare = CAL_NAMES.filter(n => !n.includes(" ") && isTok(n));
 const bareRe = new RegExp("\\b(" + calBare.map(esc).join("|") + ")\\b", "gi");
+const BARE_LAST = new Set(["koo", "whita", "afdahl", "isseks", "messinger", "koontz"]); // truncated/bare surnames in titles
 const keepCase = (src, out) => src === src.toUpperCase() ? out.toUpperCase() : out;
-const swapCal = (s) => s == null ? s : swapFull(s).replace(bareRe, (m) => keepCase(m, realLast.has(m.toLowerCase()) && !realFirst.has(m.toLowerCase()) ? fakeLast(m) : fakeFirst(m)));
+const swapCal = (s) => s == null ? s : swapFull(s).replace(bareRe, (m) => keepCase(m, BARE_LAST.has(m.toLowerCase()) || (realLast.has(m.toLowerCase()) && !realFirst.has(m.toLowerCase())) ? fakeLast(m) : fakeFirst(m)));
 
 // ---------- demo capsule ----------
 fs.mkdirSync(DEMO_CAP, { recursive: true });
